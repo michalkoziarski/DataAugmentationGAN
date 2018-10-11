@@ -16,7 +16,7 @@ from tqdm import tqdm
 DATA_PATH = Path(__file__).parent / 'data'
 TMP_PATH = Path(__file__).parent / 'tmp'
 
-POSSIBLE_AUGMENTATIONS = ['flip', 'rotation', 'scale', 'translation', 'color', 'gaussian noise', 's&p noise']
+POSSIBLE_AUGMENTATIONS = ['flip', 'rotation', 'scale', 'translation', 'color', 'gaussian_noise', 'snp_noise']
 
 ROTATION_RANGE = 15
 SCALE_RANGE = 1.5
@@ -155,14 +155,14 @@ class AbstractContainer(ABC):
         if 'color' in self.augmentations:
             image = np.flip(image, 2)
 
-        if 'gaussian noise' in self.augmentations:
+        if 'gaussian_noise' in self.augmentations:
             noise = np.random.normal(0.0, GAUSSIAN_NOISE_STD, image.shape)
 
             image += noise
             image[image < 0.0] = 0.0
             image[image > 255.0] = 255.0
 
-        if 's&p noise' in self.augmentations:
+        if 'snp_noise' in self.augmentations:
             mask = np.random.rand(*image.shape)
 
             image[mask < SALT_AND_PEPPER_NOISE_PROBABILITY / 2] = 0.0

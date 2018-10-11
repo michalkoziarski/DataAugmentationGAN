@@ -4,7 +4,7 @@ import os
 import numpy as np
 import tensorflow as tf
 
-from containers import STL10Container
+from containers import STL10Container, POSSIBLE_AUGMENTATIONS
 from models import CNN
 from tqdm import tqdm
 
@@ -15,6 +15,7 @@ logging.basicConfig(level=logging.INFO)
 
 parser = argparse.ArgumentParser()
 
+parser.add_argument('-augmentations', nargs='+', type=str, choices=POSSIBLE_AUGMENTATIONS, default=[])
 parser.add_argument('-batch_size', type=int, default=50)
 parser.add_argument('-evaluation_step', type=int, default=100)
 parser.add_argument('-learning_rate', type=float, default=0.0001)
@@ -23,9 +24,14 @@ parser.add_argument('-weight_decay', type=float, default=0.0005)
 
 args = parser.parse_args()
 
+if len(args.augmentations) == 0:
+    logging.info('Using no augmentations.')
+else:
+    logging.info('Used augmentations: %s.' % ', '.join(args.augmentations))
+
 logging.info('Loading data...')
 
-train_set = STL10Container('train', args.batch_size)
+train_set = STL10Container('train', args.batch_size, args.augmentations)
 test_set = STL10Container('test', args.batch_size)
 
 logging.info('Constructing model...')
