@@ -29,6 +29,9 @@ class AbstractContainer(ABC):
     def __init__(self, partition, batch_size=128, augmentations=(), normalize=True):
         assert partition in ['train', 'test']
 
+        if partition == 'test':
+            assert len(augmentations) == 0
+
         for augmentation in augmentations:
             assert augmentation in POSSIBLE_AUGMENTATIONS
 
