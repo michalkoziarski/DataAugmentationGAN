@@ -16,7 +16,7 @@ from tqdm import tqdm
 DATA_PATH = Path(__file__).parent / 'data'
 TMP_PATH = Path(__file__).parent / 'tmp'
 
-POSSIBLE_AUGMENTATIONS = ['flip', 'rotation', 'scale', 'translation', 'gaussian noise', 's&p noise']
+POSSIBLE_AUGMENTATIONS = ['flip', 'rotation', 'scale', 'translation', 'color', 'gaussian noise', 's&p noise']
 
 ROTATION_RANGE = 15
 SCALE_RANGE = 1.5
@@ -148,6 +148,9 @@ class AbstractContainer(ABC):
 
             for i in range(image.shape[2]):
                 image[:, :, i] = scipy.ndimage.interpolation.shift(image[:, :, i], shift=shift, mode='reflect')
+
+        if 'color' in self.augmentations:
+            image = np.flip(image, 2)
 
         if 'gaussian noise' in self.augmentations:
             noise = np.random.normal(0.0, GAUSSIAN_NOISE_STD, image.shape)
