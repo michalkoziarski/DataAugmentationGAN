@@ -2,12 +2,16 @@ import argparse
 import logging
 import os
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 
 from containers import STL10Container, POSSIBLE_AUGMENTATIONS
 from models import CNN
+from pathlib import Path
 from tqdm import tqdm
 
+
+RESULTS_PATH = Path(__file__).parent / 'results'
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -20,6 +24,7 @@ parser.add_argument('-batch_size', type=int, default=50)
 parser.add_argument('-evaluation_step', type=int, default=100)
 parser.add_argument('-learning_rate', type=float, default=0.0001)
 parser.add_argument('-iterations', type=int, default=4000)
+parser.add_argument('-name_suffix', type=str)
 parser.add_argument('-weight_decay', type=float, default=0.0005)
 
 args = parser.parse_args()
@@ -29,6 +34,12 @@ if len(args.augmentations) == 0:
 else:
     logging.info('Used augmentations: %s.' % ', '.join(args.augmentations))
 
+experiment_name = 'experiment_augmentations=' + '+'.join(args.augmentations)
+
+if args.name_suffix is not None:
+    experiment_name += '_%s' % args.name_suffix
+
+logging.info('Experiment name: %s.' % experiment_name)
 logging.info('Loading data...')
 
 train_set = STL10Container('train', args.batch_size, args.augmentations)
@@ -51,6 +62,8 @@ optimizer = tf.train.AdamOptimizer(args.learning_rate)
 train_step = optimizer.minimize(total_loss)
 
 logging.info('Training model...')
+
+results = {'iteration': [], 'accuracy': []}
 
 with tf.Session() as session:
     def _get_ground_truth_and_predictions(dataset):
@@ -107,3 +120,12 @@ with tf.Session() as session:
         test_accuracy = np.mean(ground_truth == predictions)
 
         logging.info('Observed test accuracy = %.4f.' % test_accuracy)
+
+        results['iteration'].append(i + 1)
+        results['accuracy'].append('%.4f' % test_accuracy)
+
+logging.info('Saving results...')
+
+RESULTS_PATH.mkdir(parents=True, exist_ok=True)
+
+pd.DataFrame(results).to_csv(str(RESULTS_PATH / ('%s.csv' % experiment_name)), index=False)
