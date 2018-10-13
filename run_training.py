@@ -22,19 +22,26 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-augmentations', nargs='+', type=str, choices=POSSIBLE_AUGMENTATIONS, default=[])
 parser.add_argument('-batch_size', type=int, default=50)
 parser.add_argument('-evaluation_step', type=int, default=100)
+parser.add_argument('-gaussian_noise_std', type=int, default=15)
 parser.add_argument('-learning_rate', type=float, default=0.0001)
-parser.add_argument('-iterations', type=int, default=4000)
+parser.add_argument('-iterations', type=int, default=8000)
 parser.add_argument('-name_suffix', type=str)
+parser.add_argument('-rotation_range', type=int, default=15)
+parser.add_argument('-scale_range', type=float, default=1.5)
+parser.add_argument('-snp_noise_probability', type=float, default=0.01)
+parser.add_argument('-translation_range', type=float, default=0.2)
 parser.add_argument('-weight_decay', type=float, default=0.0005)
 
 args = parser.parse_args()
 
 if len(args.augmentations) == 0:
     logging.info('Using no augmentations.')
+
+    experiment_name = 'experiment_augmentations=none'
 else:
     logging.info('Used augmentations: %s.' % ', '.join(args.augmentations))
 
-experiment_name = 'experiment_augmentations=' + '+'.join(args.augmentations)
+    experiment_name = 'experiment_augmentations=' + '+'.join(args.augmentations)
 
 if args.name_suffix is not None:
     experiment_name += '_%s' % args.name_suffix

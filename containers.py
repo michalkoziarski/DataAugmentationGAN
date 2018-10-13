@@ -18,15 +18,10 @@ TMP_PATH = Path(__file__).parent / 'tmp'
 
 POSSIBLE_AUGMENTATIONS = ['flip', 'rotation', 'scale', 'translation', 'color', 'gaussian_noise', 'snp_noise']
 
-ROTATION_RANGE = 15
-SCALE_RANGE = 1.5
-TRANSLATION_RANGE = 0.2
-GAUSSIAN_NOISE_STD = 15
-SALT_AND_PEPPER_NOISE_PROBABILITY = 0.05
-
 
 class AbstractContainer(ABC):
-    def __init__(self, partition, batch_size=128, augmentations=(), normalize=True):
+    def __init__(self, partition, batch_size=128, augmentations=(), rotation_range=15, scale_range=1.5,
+                 translation_range=0.2, gaussian_noise_std=15, snp_noise_probability=0.01, normalize=True):
         assert partition in ['train', 'test']
 
         if partition == 'test':
@@ -38,6 +33,11 @@ class AbstractContainer(ABC):
         self.partition = partition
         self.batch_size = batch_size
         self.augmentations = augmentations
+        self.rotation_range = rotation_range
+        self.scale_range = scale_range
+        self.translation_range = translation_range
+        self.gaussian_noise_std = gaussian_noise_std
+        self.snp_noise_probability = snp_noise_probability
         self.normalize = normalize
 
         if partition == 'train':
@@ -122,11 +122,11 @@ class AbstractContainer(ABC):
             image = np.fliplr(image)
 
         if 'rotation' in self.augmentations:
-            angle = np.random.randint(-ROTATION_RANGE, ROTATION_RANGE + 1)
+            angle = np.random.randint(-self.rotation_range, self.rotation_range + 1)
             image = skimage.transform.rotate(image / 255.0, angle=angle, mode='reflect') * 255.0
 
         if 'scale' in self.augmentations:
-            scale = np.random.rand() * (SCALE_RANGE - 1.0) + 1.0
+            scale = np.random.rand() * (self.scale_range - 1.0) + 1.0
             rescaled_image = skimage.transform.rescale(image / 255.0, scale=scale, mode='reflect') * 255.0
 
             if rescaled_image.shape[0] > image.shape[0]:
@@ -144,8 +144,8 @@ class AbstractContainer(ABC):
         if 'translation' in self.augmentations:
             shift = [
                 np.random.randint(
-                    -int(self.images.shape[i] * TRANSLATION_RANGE),
-                    int(self.images.shape[i] * TRANSLATION_RANGE) + 1
+                    -int(self.images.shape[i] * self.translation_range),
+                    int(self.images.shape[i] * self.translation_range) + 1
                 ) for i in [1, 2]
             ]
 
@@ -156,7 +156,7 @@ class AbstractContainer(ABC):
             image = np.flip(image, 2)
 
         if 'gaussian_noise' in self.augmentations:
-            noise = np.random.normal(0.0, GAUSSIAN_NOISE_STD, image.shape)
+            noise = np.random.normal(0.0, self.gaussian_noise_std, image.shape)
 
             image += noise
             image[image < 0.0] = 0.0
@@ -165,8 +165,8 @@ class AbstractContainer(ABC):
         if 'snp_noise' in self.augmentations:
             mask = np.random.rand(*image.shape)
 
-            image[mask < SALT_AND_PEPPER_NOISE_PROBABILITY / 2] = 0.0
-            image[mask > 1 - SALT_AND_PEPPER_NOISE_PROBABILITY / 2] = 255.0
+            image[mask < self.snp_noise_probability / 2] = 0.0
+            image[mask > 1 - self.snp_noise_probability / 2] = 255.0
 
         return image
 
