@@ -6,12 +6,12 @@ do
 
     sbatch --output=slurm_flip_${iteration}.out slurm.sh run_training.py -augmentations flip -name_suffix ${iteration}
 
-    for param in 5 10 15 20 25
+    for param in 10 20 30 40 50
     do
         sbatch --output=slurm_rotation_${param}_${iteration}.out slurm.sh run_training.py -augmentations rotation -name_suffix ${param}_${iteration}
     done
 
-    for param in 1.1 1.2 1.3 1.4 1.5
+    for param in 1.2 1.4 1.6 1.8 2.0
     do
         sbatch --output=slurm_scale_${param}_${iteration}.out slurm.sh run_training.py -augmentations scale -name_suffix ${param}_${iteration}
     done
