@@ -49,7 +49,8 @@ if args.name_suffix is not None:
 logging.info('Experiment name: %s.' % experiment_name)
 logging.info('Loading data...')
 
-train_set = STL10Container('train', args.batch_size, args.augmentations)
+train_set = STL10Container('train', args.batch_size, args.augmentations, args.rotation_range, args.scale_range,
+                           args.translation_range, args.gaussian_noise_std, args.snp_noise_probability)
 test_set = STL10Container('test', args.batch_size)
 
 logging.info('Constructing model...')
