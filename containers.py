@@ -20,8 +20,8 @@ POSSIBLE_AUGMENTATIONS = ['flip', 'rotation', 'scale', 'translation', 'color', '
 
 
 class AbstractContainer(ABC):
-    def __init__(self, partition, batch_size=128, augmentations=(), rotation_range=15, scale_range=1.5,
-                 translation_range=0.2, gaussian_noise_std=15, snp_noise_probability=0.01, normalize=True):
+    def __init__(self, partition, batch_size=128, augmentations=(), rotation_range=30, scale_range=1.8,
+                 translation_range=0.25, gaussian_noise_std=2, snp_noise_probability=0.001, normalize=True):
         assert partition in ['train', 'test']
 
         if partition == 'test':
