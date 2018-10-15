@@ -121,10 +121,6 @@ class AbstractContainer(ABC):
         if 'flip' in self.augmentations:
             image = np.fliplr(image)
 
-        if 'rotation' in self.augmentations:
-            angle = np.random.randint(-self.rotation_range, self.rotation_range + 1)
-            image = skimage.transform.rotate(image / 255.0, angle=angle, mode='reflect') * 255.0
-
         if 'scale' in self.augmentations:
             scale = np.random.rand() * (self.scale_range - 1.0) + 1.0
             rescaled_image = skimage.transform.rescale(image / 255.0, scale=scale, mode='reflect') * 255.0
@@ -151,6 +147,10 @@ class AbstractContainer(ABC):
 
             for i in range(image.shape[2]):
                 image[:, :, i] = scipy.ndimage.interpolation.shift(image[:, :, i], shift=shift, mode='reflect')
+
+        if 'rotation' in self.augmentations:
+            angle = np.random.randint(-self.rotation_range, self.rotation_range + 1)
+            image = skimage.transform.rotate(image / 255.0, angle=angle, mode='reflect') * 255.0
 
         if 'color' in self.augmentations:
             image = np.flip(image, 2)
