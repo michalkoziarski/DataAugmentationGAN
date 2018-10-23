@@ -6,7 +6,7 @@ import pandas as pd
 import tensorflow as tf
 
 from containers import STL10Container, POSSIBLE_AUGMENTATIONS
-from models import CNN
+from models import Classifier
 from pathlib import Path
 from tqdm import tqdm
 
@@ -55,7 +55,7 @@ test_set = STL10Container('test', args.batch_size)
 
 logging.info('Constructing model...')
 
-network = CNN([96, 96, 3], 10)
+network = Classifier([96, 96, 3], [10])
 
 ground_truth_placeholder = tf.placeholder(tf.int64, shape=[None])
 

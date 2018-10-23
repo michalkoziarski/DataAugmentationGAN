@@ -1,11 +1,13 @@
 import inspect
 import tensorflow as tf
 
+from abc import ABC, abstractmethod
 
-class CNN:
-    def __init__(self, input_shape, n_classes):
+
+class AbstractModel(ABC):
+    def __init__(self, input_shape, output_shape):
         self.input_shape = input_shape
-        self.n_classes = n_classes
+        self.output_shape = output_shape
 
         self.inputs = tf.placeholder(tf.float32, shape=[None] + list(input_shape))
         self.outputs = self.inputs
@@ -22,6 +24,12 @@ class CNN:
         else:
             self.outputs = layer(self.outputs)
 
+    @abstractmethod
+    def setup(self):
+        pass
+
+
+class Classifier(AbstractModel):
     def setup(self):
         self.add(tf.layers.Conv2D(64, 3, padding='same', activation=tf.nn.relu))
         self.add(tf.layers.Conv2D(64, 3, padding='same', activation=tf.nn.relu))
@@ -47,4 +55,4 @@ class CNN:
         self.add(tf.layers.Dense(1024, activation=tf.nn.relu))
         self.add(tf.layers.Dropout(0.5))
 
-        self.add(tf.layers.Dense(self.n_classes, activation=tf.nn.relu))
+        self.add(tf.layers.Dense(self.output_shape[0], activation=tf.nn.relu))
