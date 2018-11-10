@@ -69,17 +69,21 @@ class Classifier(AbstractModel):
 class Discriminator(AbstractModel):
     def setup(self):
         with tf.variable_scope('Discriminator', reuse=self.reuse):
-            self.add(tf.layers.Conv2D(64, 5, 2, 'same', activation=tf.nn.leaky_relu))
-            self.add(tf.layers.Dropout(0.4))
+            self.add(tf.layers.Conv2D(64, 5, 2, 'same', activation=tf.nn.leaky_relu, use_bias=False))
+            self.add(tf.layers.BatchNormalization(momentum=0.9))
+            self.outputs = tf.nn.relu(self.outputs)
 
-            self.add(tf.layers.Conv2D(128, 5, 2, 'same', activation=tf.nn.leaky_relu))
-            self.add(tf.layers.Dropout(0.4))
+            self.add(tf.layers.Conv2D(128, 5, 2, 'same', activation=tf.nn.leaky_relu, use_bias=False))
+            self.add(tf.layers.BatchNormalization(momentum=0.9))
+            self.outputs = tf.nn.relu(self.outputs)
 
-            self.add(tf.layers.Conv2D(256, 5, 2, 'same', activation=tf.nn.leaky_relu))
-            self.add(tf.layers.Dropout(0.4))
+            self.add(tf.layers.Conv2D(256, 5, 2, 'same', activation=tf.nn.leaky_relu, use_bias=False))
+            self.add(tf.layers.BatchNormalization(momentum=0.9))
+            self.outputs = tf.nn.relu(self.outputs)
 
-            self.add(tf.layers.Conv2D(512, 5, 1, 'same', activation=tf.nn.leaky_relu))
-            self.add(tf.layers.Dropout(0.4))
+            self.add(tf.layers.Conv2D(512, 5, 1, 'same', activation=tf.nn.leaky_relu, use_bias=False))
+            self.add(tf.layers.BatchNormalization(momentum=0.9))
+            self.outputs = tf.nn.relu(self.outputs)
 
             self.add(tf.layers.Flatten())
 
@@ -89,22 +93,21 @@ class Discriminator(AbstractModel):
 class Generator(AbstractModel):
     def setup(self):
         with tf.variable_scope('Generator', reuse=self.reuse):
-            self.add(tf.layers.Dense(1024 * 4 * 4))
+            self.add(tf.layers.Dense(1024 * 4 * 4, use_bias=False))
             self.add(tf.layers.BatchNormalization(momentum=0.9))
             self.outputs = tf.nn.relu(self.outputs)
 
             self.outputs = tf.reshape(self.outputs, (-1, 4, 4, 1024))
-            self.add(tf.layers.Dropout(0.4))
 
-            self.add(tf.layers.Conv2DTranspose(512, 5, 2, 'same'))
+            self.add(tf.layers.Conv2DTranspose(512, 5, 2, 'same', use_bias=False))
             self.add(tf.layers.BatchNormalization(momentum=0.9))
             self.outputs = tf.nn.relu(self.outputs)
 
-            self.add(tf.layers.Conv2DTranspose(256, 5, 2, 'same'))
+            self.add(tf.layers.Conv2DTranspose(256, 5, 2, 'same', use_bias=False))
             self.add(tf.layers.BatchNormalization(momentum=0.9))
             self.outputs = tf.nn.relu(self.outputs)
 
-            self.add(tf.layers.Conv2DTranspose(128, 5, 2, 'same'))
+            self.add(tf.layers.Conv2DTranspose(128, 5, 2, 'same', use_bias=False))
             self.add(tf.layers.BatchNormalization(momentum=0.9))
             self.outputs = tf.nn.relu(self.outputs)
 
