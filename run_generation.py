@@ -107,5 +107,11 @@ with tf.Session() as session:
             generator.inputs: np.random.uniform(-1, 1, [args.batch_size, 100]).astype(np.float32)
         })[0]
 
+        generated_images /= 2.0
+        generated_images += 0.5
+        generated_images *= 255.0
+        generated_images = np.clip(generated_images, 0, 255)
+        generated_images = generated_images.astype(np.uint8)
+
         for j in range(len(generated_images)):
             imageio.imwrite(str(SAMPLES_PATH / ('%d.png' % j)), generated_images[j])

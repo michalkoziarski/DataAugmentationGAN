@@ -108,4 +108,4 @@ class Generator(AbstractModel):
             self.add(tf.layers.BatchNormalization(momentum=0.9))
             self.outputs = tf.nn.relu(self.outputs)
 
-            self.add(tf.layers.Conv2DTranspose(3, 5, 3, 'same', activation=tf.nn.sigmoid))
+            self.add(tf.layers.Conv2DTranspose(3, 5, 3, 'same', activation=tf.nn.tanh))
