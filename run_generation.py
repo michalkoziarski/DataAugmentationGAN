@@ -56,10 +56,11 @@ discriminator_loss = discriminator_loss_real + discriminator_loss_fake
 generator_variables = [var for var in tf.trainable_variables() if 'Generator' in var.name]
 discriminator_variables = [var for var in tf.trainable_variables() if 'Discriminator' in var.name]
 
-generator_train_step = tf.train.AdamOptimizer(args.learning_rate).\
-    minimize(generator_loss, var_list=generator_variables)
-discriminator_train_step = tf.train.AdamOptimizer(args.learning_rate).\
-    minimize(discriminator_loss, var_list=discriminator_variables)
+with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
+    generator_train_step = tf.train.AdamOptimizer(args.learning_rate).\
+        minimize(generator_loss, var_list=generator_variables)
+    discriminator_train_step = tf.train.AdamOptimizer(args.learning_rate).\
+        minimize(discriminator_loss, var_list=discriminator_variables)
 
 logging.info('Training model...')
 
