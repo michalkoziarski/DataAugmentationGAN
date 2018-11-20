@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import pickle
 import scipy.ndimage.interpolation
+import skimage.color
 import skimage.transform
 import tarfile
 import urllib.request
@@ -20,8 +21,9 @@ POSSIBLE_AUGMENTATIONS = ['flip', 'rotation', 'scale', 'translation', 'color', '
 
 
 class AbstractContainer(ABC):
-    def __init__(self, partition, batch_size=128, augmentations=(), rotation_range=30, scale_range=1.8,
-                 translation_range=0.25, gaussian_noise_std=2, snp_noise_probability=0.001, normalize=True):
+    def __init__(self, partition, batch_size=128, augmentations=(), rotation_range=30,
+                 scale_range=1.8, translation_range=0.25, gaussian_noise_std=2,
+                 snp_noise_probability=0.001, normalize=True, image_size=None, greyscale=False):
         assert partition in ['train', 'test']
 
         if partition == 'test':
@@ -29,6 +31,9 @@ class AbstractContainer(ABC):
 
         for augmentation in augmentations:
             assert augmentation in POSSIBLE_AUGMENTATIONS
+
+        if image_size is not None:
+            assert len(image_size) == 2
 
         self.partition = partition
         self.batch_size = batch_size
@@ -39,6 +44,8 @@ class AbstractContainer(ABC):
         self.gaussian_noise_std = gaussian_noise_std
         self.snp_noise_probability = snp_noise_probability
         self.normalize = normalize
+        self.image_size = image_size
+        self.greyscale = greyscale
 
         if partition == 'train':
             self.shuffling = True
@@ -48,7 +55,7 @@ class AbstractContainer(ABC):
             raise NotImplementedError
 
         self.name = None
-        self.size = None
+        self.n_images = None
         self.images = None
         self.labels = None
         self.position = 0
@@ -70,7 +77,7 @@ class AbstractContainer(ABC):
         _unpack(self.name, **data)
 
     def _load(self):
-        assert self.size is None
+        assert self.n_images is None
         assert self.images is None
         assert self.labels is None
 
@@ -79,19 +86,18 @@ class AbstractContainer(ABC):
         if not partition_path.exists():
             self._download_and_unpack()
 
-        self.size = 0
-
-        image_shape = None
+        self.n_images = 0
 
         for label_path in partition_path.iterdir():
             for image_path in label_path.iterdir():
-                if self.size == 0:
-                    image_shape = imageio.imread(str(image_path)).shape[:2]
+                if self.n_images == 0 and self.image_size is None:
+                    self.image_size = imageio.imread(str(image_path)).shape[:2]
 
-                self.size += 1
+                self.n_images += 1
 
-        self.images = np.empty([self.size, image_shape[0], image_shape[1], 3], dtype=np.float32)
-        self.labels = np.empty(self.size, dtype=np.int64)
+        self.images = np.empty([self.n_images, self.image_size[0], self.image_size[1], 1 if self.greyscale else 3],
+                               dtype=np.float32)
+        self.labels = np.empty(self.n_images, dtype=np.int64)
 
         current_index = 0
 
@@ -99,7 +105,17 @@ class AbstractContainer(ABC):
             label = int(label_path.stem)
 
             for image_path in sorted(label_path.iterdir()):
-                image = imageio.imread(str(image_path)).astype(np.float32)
+                image = imageio.imread(str(image_path))
+
+                if list(image.shape[:2]) != list(self.image_size):
+                    image = skimage.transform.resize(image, self.image_size) * 255.
+                else:
+                    image = image.astype(np.float32)
+
+                if self.greyscale:
+                    image = np.expand_dims(skimage.color.rgb2grey(image / 255.) * 255., 2)
+                else:
+                    image = skimage.color.grey2rgb(image / 255.) * 255.
 
                 self.images[current_index] = image
                 self.labels[current_index] = label
@@ -110,7 +126,7 @@ class AbstractContainer(ABC):
             self._shuffle()
 
     def _shuffle(self):
-        indices = list(range(self.size))
+        indices = list(range(self.n_images))
 
         np.random.shuffle(indices)
 
@@ -184,7 +200,7 @@ class AbstractContainer(ABC):
 
         self.position += self.batch_size
 
-        if self.position >= self.size:
+        if self.position >= self.n_images:
             self.position = 0
 
             if self.shuffling:
@@ -193,7 +209,7 @@ class AbstractContainer(ABC):
         return batch_images, batch_labels
 
     def batches_per_epoch(self):
-        return int(np.ceil(self.size / self.batch_size))
+        return int(np.ceil(self.n_images / self.batch_size))
 
     def epoch(self):
         for _ in range(self.batches_per_epoch()):
