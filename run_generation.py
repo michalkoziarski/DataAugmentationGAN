@@ -77,8 +77,6 @@ with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
 
 logging.info('Training model...')
 
-SAMPLES_PATH.mkdir(parents=True, exist_ok=True)
-
 with tf.Session() as session:
     session.run(tf.global_variables_initializer())
 
@@ -128,5 +126,8 @@ with tf.Session() as session:
         generated_images = np.clip(generated_images, 0, 255)
         generated_images = generated_images.astype(np.uint8)
 
+        epoch_samples_path = SAMPLES_PATH / ('epoch_%.4d' % (i + 1))
+        epoch_samples_path.mkdir(parents=True, exist_ok=True)
+
         for j in range(len(generated_images)):
-            imageio.imwrite(str(SAMPLES_PATH / ('%d.png' % j)), generated_images[j])
+            imageio.imwrite(str(epoch_samples_path / ('%d.png' % j)), generated_images[j])
