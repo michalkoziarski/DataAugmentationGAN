@@ -18,6 +18,7 @@ class AbstractModel(ABC):
             self.inputs = inputs
 
         self.outputs = self.inputs
+        self.logits = None
         self.layers = []
         self.is_training = tf.placeholder_with_default(False, [])
 
@@ -69,46 +70,44 @@ class Classifier(AbstractModel):
 class Discriminator(AbstractModel):
     def setup(self):
         with tf.variable_scope('Discriminator', reuse=self.reuse):
-            self.add(tf.layers.Conv2D(64, 5, 2, 'same', activation=tf.nn.leaky_relu, use_bias=False))
-            self.add(tf.layers.BatchNormalization(momentum=0.9))
-            self.outputs = tf.nn.relu(self.outputs)
+            self.add(tf.layers.Conv2D(128, 4, 2, 'same', use_bias=False))
+            self.add(tf.layers.BatchNormalization())
+            self.outputs = tf.nn.leaky_relu(self.outputs)
 
-            self.add(tf.layers.Conv2D(128, 5, 2, 'same', activation=tf.nn.leaky_relu, use_bias=False))
-            self.add(tf.layers.BatchNormalization(momentum=0.9))
-            self.outputs = tf.nn.relu(self.outputs)
+            self.add(tf.layers.Conv2D(256, 4, 2, 'same', use_bias=False))
+            self.add(tf.layers.BatchNormalization())
+            self.outputs = tf.nn.leaky_relu(self.outputs)
 
-            self.add(tf.layers.Conv2D(256, 5, 2, 'same', activation=tf.nn.leaky_relu, use_bias=False))
-            self.add(tf.layers.BatchNormalization(momentum=0.9))
-            self.outputs = tf.nn.relu(self.outputs)
+            self.add(tf.layers.Conv2D(512, 4, 2, 'same', use_bias=False))
+            self.add(tf.layers.BatchNormalization())
+            self.outputs = tf.nn.leaky_relu(self.outputs)
 
-            self.add(tf.layers.Conv2D(512, 5, 1, 'same', activation=tf.nn.leaky_relu, use_bias=False))
-            self.add(tf.layers.BatchNormalization(momentum=0.9))
-            self.outputs = tf.nn.relu(self.outputs)
+            self.add(tf.layers.Conv2D(1024, 4, 2, 'same', use_bias=False))
+            self.add(tf.layers.BatchNormalization())
+            self.outputs = tf.nn.leaky_relu(self.outputs)
 
-            self.add(tf.layers.Flatten())
-
-            self.add(tf.layers.Dense(1, activation=tf.nn.sigmoid))
+            self.add(tf.layers.Conv2D(1, 4, 1, 'valid'))
+            self.logits = self.outputs
+            self.outputs = tf.nn.sigmoid(self.outputs)
 
 
 class Generator(AbstractModel):
     def setup(self):
         with tf.variable_scope('Generator', reuse=self.reuse):
-            self.add(tf.layers.Dense(1024 * 4 * 4, use_bias=False))
-            self.add(tf.layers.BatchNormalization(momentum=0.9))
-            self.outputs = tf.nn.relu(self.outputs)
+            self.add(tf.layers.Conv2DTranspose(1024, 4, 1, 'valid', use_bias=False))
+            self.add(tf.layers.BatchNormalization())
+            self.outputs = tf.nn.leaky_relu(self.outputs)
 
-            self.outputs = tf.reshape(self.outputs, (-1, 4, 4, 1024))
+            self.add(tf.layers.Conv2DTranspose(512, 4, 2, 'same', use_bias=False))
+            self.add(tf.layers.BatchNormalization())
+            self.outputs = tf.nn.leaky_relu(self.outputs)
 
-            self.add(tf.layers.Conv2DTranspose(512, 5, 2, 'same', use_bias=False))
-            self.add(tf.layers.BatchNormalization(momentum=0.9))
-            self.outputs = tf.nn.relu(self.outputs)
+            self.add(tf.layers.Conv2DTranspose(256, 4, 2, 'same', use_bias=False))
+            self.add(tf.layers.BatchNormalization())
+            self.outputs = tf.nn.leaky_relu(self.outputs)
 
-            self.add(tf.layers.Conv2DTranspose(256, 5, 2, 'same', use_bias=False))
-            self.add(tf.layers.BatchNormalization(momentum=0.9))
-            self.outputs = tf.nn.relu(self.outputs)
+            self.add(tf.layers.Conv2DTranspose(128, 4, 2, 'same', use_bias=False))
+            self.add(tf.layers.BatchNormalization())
+            self.outputs = tf.nn.leaky_relu(self.outputs)
 
-            self.add(tf.layers.Conv2DTranspose(128, 5, 2, 'same', use_bias=False))
-            self.add(tf.layers.BatchNormalization(momentum=0.9))
-            self.outputs = tf.nn.relu(self.outputs)
-
-            self.add(tf.layers.Conv2DTranspose(3, 5, 3, 'same', activation=tf.nn.tanh))
+            self.add(tf.layers.Conv2DTranspose(1, 4, 2, 'same', activation=tf.nn.tanh))
