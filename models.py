@@ -110,4 +110,4 @@ class Generator(AbstractModel):
             self.add(tf.layers.BatchNormalization())
             self.outputs = tf.nn.leaky_relu(self.outputs)
 
-            self.add(tf.layers.Conv2DTranspose(1, 4, 2, 'same', activation=tf.nn.tanh))
+            self.add(tf.layers.Conv2DTranspose(3, 4, 2, 'same', activation=tf.nn.tanh))

@@ -38,12 +38,12 @@ elif args.dataset == 'stl10':
 else:
     raise NotImplementedError
 
-dataset = Container('train', args.batch_size, image_size=[64, 64], greyscale=True)
+dataset = Container('train', args.batch_size, image_size=[64, 64])
 
 logging.info('Constructing model...')
 
 generator = Generator([1, 1, 100])
-real_discriminator = Discriminator([64, 64, 1])
+real_discriminator = Discriminator([64, 64, 3])
 fake_discriminator = Discriminator(inputs=generator.outputs, reuse=True)
 
 generator_loss = tf.reduce_mean(
