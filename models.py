@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 
 
 class AbstractModel(ABC):
-    def __init__(self, input_shape=None, output_shape=None, inputs=None, reuse=False):
+    def __init__(self, input_shape=None, output_shape=None, inputs=None, reuse=False, is_training=None):
         assert not (input_shape is None and inputs is None)
 
         self.input_shape = input_shape
@@ -17,10 +17,14 @@ class AbstractModel(ABC):
         else:
             self.inputs = inputs
 
+        if is_training is None:
+            self.is_training = tf.placeholder_with_default(False, [])
+        else:
+            self.is_training = is_training
+
         self.outputs = self.inputs
         self.logits = None
         self.layers = []
-        self.is_training = tf.placeholder_with_default(False, [])
 
         self.setup()
 

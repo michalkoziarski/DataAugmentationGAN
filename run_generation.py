@@ -42,9 +42,11 @@ dataset = Container('train', args.batch_size, image_size=[64, 64])
 
 logging.info('Constructing model...')
 
-generator = Generator([1, 1, 100])
-real_discriminator = Discriminator([64, 64, 3])
-fake_discriminator = Discriminator(inputs=generator.outputs, reuse=True)
+is_training = tf.placeholder_with_default(False, [])
+
+generator = Generator([1, 1, 100], is_training=is_training)
+real_discriminator = Discriminator([64, 64, 3], is_training=is_training)
+fake_discriminator = Discriminator(inputs=generator.outputs, reuse=True, is_training=is_training)
 
 generator_loss = tf.reduce_mean(
     tf.nn.sigmoid_cross_entropy_with_logits(
@@ -95,9 +97,7 @@ with tf.Session() as session:
             feed_dict = {
                 generator.inputs: batch_noise,
                 real_discriminator.inputs: batch_images,
-                generator.is_training: True,
-                real_discriminator.is_training: True,
-                fake_discriminator.is_training: True
+                is_training: True
             }
 
             _, batch_discriminator_loss = session.run(
