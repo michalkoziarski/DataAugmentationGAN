@@ -126,7 +126,7 @@ with tf.Session() as session:
         generated_images = np.clip(generated_images, 0, 255)
         generated_images = generated_images.astype(np.uint8)
 
-        epoch_samples_path = SAMPLES_PATH / ('epoch_%.4d' % (i + 1))
+        epoch_samples_path = SAMPLES_PATH / args.dataset / ('epoch_%.4d' % (i + 1))
         epoch_samples_path.mkdir(parents=True, exist_ok=True)
 
         for j in range(len(generated_images)):
