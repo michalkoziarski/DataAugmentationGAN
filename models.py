@@ -72,6 +72,12 @@ class Classifier(AbstractModel):
 
 
 class Discriminator(AbstractModel):
+    def __init__(self, input_shape=None, output_shape=None, inputs=None, reuse=False, is_training=None,
+                 conditional_inputs=None):
+        self.conditional_inputs = conditional_inputs
+
+        super().__init__(input_shape, output_shape, inputs, reuse, is_training)
+
     def setup(self):
         with tf.variable_scope('Discriminator', reuse=self.reuse):
             self.add(tf.layers.Conv2D(128, 4, 2, 'same', use_bias=False))
@@ -92,10 +98,17 @@ class Discriminator(AbstractModel):
 
             self.add(tf.layers.Conv2D(1, 4, 1, 'valid'))
             self.logits = self.outputs
+
             self.outputs = tf.nn.sigmoid(self.outputs)
 
 
 class Generator(AbstractModel):
+    def __init__(self, input_shape=None, output_shape=None, inputs=None, reuse=False, is_training=None,
+                 conditional_inputs=None):
+        self.conditional_inputs = conditional_inputs
+
+        super().__init__(input_shape, output_shape, inputs, reuse, is_training)
+
     def setup(self):
         with tf.variable_scope('Generator', reuse=self.reuse):
             self.add(tf.layers.Conv2DTranspose(1024, 4, 1, 'valid', use_bias=False))
