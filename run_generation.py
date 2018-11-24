@@ -51,24 +51,24 @@ logging.info('Constructing model...')
 is_training = tf.placeholder_with_default(False, [])
 conditional_inputs = tf.placeholder(tf.float32, [None, n_classes])
 
-generator = Generator([args.z_shape], is_training=is_training, conditional_inputs=conditional_inputs)
+generator = Generator([1, 1, args.z_shape], is_training=is_training, conditional_inputs=conditional_inputs)
 real_discriminator = Discriminator([64, 64, 3], is_training=is_training, conditional_inputs=conditional_inputs)
 fake_discriminator = Discriminator(inputs=generator.outputs, is_training=is_training,
                                    conditional_inputs=conditional_inputs, reuse=True)
 
 generator_loss = tf.reduce_mean(
     tf.nn.sigmoid_cross_entropy_with_logits(
-        logits=fake_discriminator.logits, labels=tf.ones([args.batch_size, 1])
+        logits=fake_discriminator.logits, labels=tf.ones([args.batch_size, 1, 1, 1])
     )
 )
 discriminator_loss_real = tf.reduce_mean(
     tf.nn.sigmoid_cross_entropy_with_logits(
-        logits=real_discriminator.logits, labels=tf.ones([args.batch_size, 1])
+        logits=real_discriminator.logits, labels=tf.ones([args.batch_size, 1, 1, 1])
     )
 )
 discriminator_loss_fake = tf.reduce_mean(
     tf.nn.sigmoid_cross_entropy_with_logits(
-        logits=fake_discriminator.logits, labels=tf.zeros([args.batch_size, 1])
+        logits=fake_discriminator.logits, labels=tf.zeros([args.batch_size, 1, 1, 1])
     )
 )
 discriminator_loss = discriminator_loss_real + discriminator_loss_fake
@@ -100,7 +100,7 @@ with tf.Session() as session:
 
         for _ in tqdm(range(args.evaluation_step)):
             batch_images, batch_labels = dataset.batch()
-            batch_noise = np.random.uniform(-1, 1, [args.batch_size, args.z_shape]).astype(np.float32)
+            batch_noise = np.random.uniform(-1, 1, [args.batch_size, 1, 1, args.z_shape]).astype(np.float32)
 
             feed_dict = {
                 generator.inputs: batch_noise,
@@ -127,7 +127,7 @@ with tf.Session() as session:
 
         for cls in tqdm(range(n_classes)):
             generated_images = session.run([generator.outputs], feed_dict={
-                generator.inputs: np.random.uniform(-1, 1, [args.batch_size, args.z_shape]).astype(np.float32),
+                generator.inputs: np.random.uniform(-1, 1, [args.batch_size, 1, 1, args.z_shape]).astype(np.float32),
                 conditional_inputs: one_hot(np.repeat(cls, args.batch_size), n_classes)
             })[0]
 
