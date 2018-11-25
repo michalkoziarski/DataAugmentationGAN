@@ -52,23 +52,23 @@ is_training = tf.placeholder_with_default(False, [])
 conditional_inputs = tf.placeholder(tf.float32, [None, n_classes])
 
 generator = Generator([1, 1, args.z_shape], is_training=is_training, conditional_inputs=conditional_inputs)
-real_discriminator = Discriminator([64, 64, 3], is_training=is_training, conditional_inputs=conditional_inputs)
-fake_discriminator = Discriminator(inputs=generator.outputs, is_training=is_training,
-                                   conditional_inputs=conditional_inputs, reuse=True)
+real_discriminator = Discriminator([64, 64, 3], [n_classes + 1], is_training=is_training)
+fake_discriminator = Discriminator(inputs=generator.outputs, output_shape=[n_classes + 1], is_training=is_training,
+                                   reuse=True)
 
 generator_loss = tf.reduce_mean(
-    tf.nn.sigmoid_cross_entropy_with_logits(
-        logits=fake_discriminator.logits, labels=tf.ones([args.batch_size, 1, 1, 1])
+    tf.nn.sparse_softmax_cross_entropy_with_logits(
+        logits=fake_discriminator.logits, labels=tf.argmax(conditional_inputs, axis=1)
     )
 )
 discriminator_loss_real = tf.reduce_mean(
-    tf.nn.sigmoid_cross_entropy_with_logits(
-        logits=real_discriminator.logits, labels=tf.ones([args.batch_size, 1, 1, 1])
+    tf.nn.sparse_softmax_cross_entropy_with_logits(
+        logits=real_discriminator.logits, labels=tf.argmax(conditional_inputs, axis=1)
     )
 )
 discriminator_loss_fake = tf.reduce_mean(
-    tf.nn.sigmoid_cross_entropy_with_logits(
-        logits=fake_discriminator.logits, labels=tf.zeros([args.batch_size, 1, 1, 1])
+    tf.nn.sparse_softmax_cross_entropy_with_logits(
+        logits=fake_discriminator.logits, labels=tf.fill([args.batch_size], n_classes)
     )
 )
 discriminator_loss = discriminator_loss_real + discriminator_loss_fake

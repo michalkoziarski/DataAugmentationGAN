@@ -72,12 +72,6 @@ class Classifier(AbstractModel):
 
 
 class Discriminator(AbstractModel):
-    def __init__(self, input_shape=None, output_shape=None, inputs=None, reuse=False, is_training=None,
-                 conditional_inputs=None):
-        self.conditional_inputs = conditional_inputs
-
-        super().__init__(input_shape, output_shape, inputs, reuse, is_training)
-
     def setup(self):
         with tf.variable_scope('Discriminator', reuse=self.reuse):
             self.add(tf.layers.Conv2D(128, 4, 2, 'same', use_bias=False))
@@ -96,10 +90,11 @@ class Discriminator(AbstractModel):
             self.add(tf.layers.BatchNormalization())
             self.outputs = tf.nn.leaky_relu(self.outputs)
 
-            self.add(tf.layers.Conv2D(1, 4, 1, 'valid'))
+            self.add(tf.layers.Conv2D(self.output_shape[0], 4, 1, 'valid'))
+            self.outputs = tf.reshape(self.outputs, [-1, self.output_shape[0]])
             self.logits = self.outputs
 
-            self.outputs = tf.nn.sigmoid(self.outputs)
+            self.outputs = tf.nn.softmax(self.outputs)
 
 
 class Generator(AbstractModel):
@@ -111,6 +106,12 @@ class Generator(AbstractModel):
 
     def setup(self):
         with tf.variable_scope('Generator', reuse=self.reuse):
+            if self.conditional_inputs is not None:
+                self.outputs = tf.concat([
+                    self.outputs,
+                    tf.reshape(self.conditional_inputs, [-1, 1, 1, int(self.conditional_inputs.shape[1])])
+                ], -1)
+
             self.add(tf.layers.Conv2DTranspose(1024, 4, 1, 'valid', use_bias=False))
             self.add(tf.layers.BatchNormalization())
             self.outputs = tf.nn.leaky_relu(self.outputs)
