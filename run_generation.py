@@ -23,10 +23,11 @@ logging.basicConfig(level=logging.INFO)
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('-batch_size', type=int, default=50)
+parser.add_argument('-batch_size', type=int, default=100)
 parser.add_argument('-dataset', type=str, choices=['cifar10', 'mnist', 'stl10'], required=True)
-parser.add_argument('-evaluation_step', type=int, default=100)
-parser.add_argument('-iterations', type=int, default=15000)
+parser.add_argument('-evaluation_step', type=int, default=50)
+parser.add_argument('-iterations', type=int, default=7500)
+parser.add_argument('-image_similarity_decay', type=float, default=0.001)
 parser.add_argument('-learning_rate', type=float, default=0.0002)
 parser.add_argument('-z_shape', type=int, default=100)
 
@@ -56,11 +57,23 @@ real_discriminator = Discriminator([64, 64, 3], [n_classes + 1], is_training=is_
 fake_discriminator = Discriminator(inputs=generator.outputs, output_shape=[n_classes + 1], is_training=is_training,
                                    reuse=True)
 
+
+def image_similarity(x, y):
+    return tf.nn.l2_loss(x - y)
+
+
+def average_image_similarity(x, ys):
+    return tf.reduce_mean(tf.map_fn(lambda y: image_similarity(x, y), ys, dtype=tf.float32))
+
+
+image_similarity_loss = -args.image_similarity_decay * tf.reduce_mean([
+    average_image_similarity(generator.outputs[i], generator.outputs) for i in range(args.batch_size)
+])
 generator_loss = tf.reduce_mean(
     tf.nn.sparse_softmax_cross_entropy_with_logits(
         logits=fake_discriminator.logits, labels=tf.argmax(conditional_inputs, axis=1)
     )
-)
+) + image_similarity_loss
 discriminator_loss_real = tf.reduce_mean(
     tf.nn.sparse_softmax_cross_entropy_with_logits(
         logits=real_discriminator.logits, labels=tf.argmax(conditional_inputs, axis=1)
@@ -97,6 +110,7 @@ with tf.Session() as session:
 
         generator_losses = []
         discriminator_losses = []
+        image_similarity_losses = []
 
         for _ in tqdm(range(args.evaluation_step)):
             batch_images, batch_labels = dataset.batch()
@@ -115,14 +129,15 @@ with tf.Session() as session:
             discriminator_losses.append(batch_discriminator_loss)
 
             for _ in range(2):
-                _, batch_generator_loss = session.run(
-                    [generator_train_step, generator_loss], feed_dict=feed_dict
+                _, batch_generator_loss, batch_image_similarity_loss = session.run(
+                    [generator_train_step, generator_loss, image_similarity_loss], feed_dict=feed_dict
                 )
 
                 generator_losses.append(batch_generator_loss)
+                image_similarity_losses.append(batch_image_similarity_loss)
 
-        logging.info('Observed generator loss = %.4f and discriminator loss = %.4f.' %
-                     (float(np.mean(generator_losses)), float(np.mean(discriminator_losses))))
+        logging.info('Observed generator loss = %.4f, discriminator loss = %.4f, image similarity loss = %.4f..' %
+                     (float(np.mean(generator_losses)), float(np.mean(discriminator_losses)), float(np.mean(image_similarity_losses))))
         logging.info('Generating images...')
 
         for cls in tqdm(range(n_classes)):
