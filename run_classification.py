@@ -47,7 +47,7 @@ else:
 if args.name_suffix is not None:
     experiment_name += '_%s' % args.name_suffix
 
-logging.info('Experiment name: %s.' % experiment_name)
+logging.info('Experiment name: %s/%s.' % (args.dataset, experiment_name))
 logging.info('Loading data...')
 
 if args.dataset == 'cifar10':
