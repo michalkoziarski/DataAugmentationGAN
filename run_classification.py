@@ -60,12 +60,12 @@ else:
     raise NotImplementedError
 
 train_set = Container('train', args.batch_size, args.augmentations, args.rotation_range, args.scale_range,
-                      args.translation_range, args.gaussian_noise_std, args.snp_noise_probability)
-test_set = Container('test', args.batch_size)
+                      args.translation_range, args.gaussian_noise_std, args.snp_noise_probability, image_size=[64, 64])
+test_set = Container('test', args.batch_size, image_size=[64, 64])
 
 logging.info('Constructing model...')
 
-network = Classifier([96, 96, 3], [10])
+network = Classifier([64, 64, 3], [10])
 
 ground_truth_placeholder = tf.placeholder(tf.int64, shape=[None])
 
