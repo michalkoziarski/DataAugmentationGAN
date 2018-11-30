@@ -16,6 +16,7 @@ def one_hot(labels, n_classes):
 
 
 SAMPLES_PATH = Path(__file__).parent / 'samples'
+GENERATED_DATA_PATH = Path(__file__).parent / 'generated_data'
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -26,6 +27,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-batch_size', type=int, default=100)
 parser.add_argument('-dataset', type=str, choices=['cifar10', 'mnist', 'stl10'], required=True)
 parser.add_argument('-evaluation_step', type=int, default=50)
+parser.add_argument('-generated_images_per_class', type=int, default=10000)
 parser.add_argument('-iterations', type=int, default=7500)
 parser.add_argument('-image_similarity_decay', type=float, default=0.001)
 parser.add_argument('-learning_rate', type=float, default=0.0002)
@@ -138,7 +140,7 @@ with tf.Session() as session:
 
         logging.info('Observed generator loss = %.4f, discriminator loss = %.4f, image similarity loss = %.4f..' %
                      (float(np.mean(generator_losses)), float(np.mean(discriminator_losses)), float(np.mean(image_similarity_losses))))
-        logging.info('Generating images...')
+        logging.info('Generating samples...')
 
         for cls in tqdm(range(n_classes)):
             generated_images = session.run([generator.outputs], feed_dict={
@@ -152,8 +154,31 @@ with tf.Session() as session:
             generated_images = np.clip(generated_images, 0, 255)
             generated_images = generated_images.astype(np.uint8)
 
-            epoch_samples_path = SAMPLES_PATH / args.dataset / ('epoch_%.4d' % (i + 1)) / str(cls)
+            epoch_samples_path = SAMPLES_PATH / dataset.name / ('epoch_%.5d' % (i + 1)) / str(cls)
             epoch_samples_path.mkdir(parents=True, exist_ok=True)
 
             for j in range(len(generated_images)):
-                imageio.imwrite(str(epoch_samples_path / ('%d.png' % (j + 1))), generated_images[j])
+                imageio.imwrite(str(epoch_samples_path / ('%.5d.png' % (j + 1))), generated_images[j])
+
+    logging.info('Generating final images...')
+
+    for cls in range(n_classes):
+        logging.info('Generating final images for class %d...' % cls)
+
+        for i in tqdm(range(args.generated_images_per_class // args.batch_size)):
+            generated_images = session.run([generator.outputs], feed_dict={
+                generator.inputs: np.random.uniform(-1, 1, [args.batch_size, 1, 1, args.z_shape]).astype(np.float32),
+                conditional_inputs: one_hot(np.repeat(cls, args.batch_size), n_classes)
+            })[0]
+
+            generated_images /= 2.0
+            generated_images += 0.5
+            generated_images *= 255.0
+            generated_images = np.clip(generated_images, 0, 255)
+            generated_images = generated_images.astype(np.uint8)
+
+            epoch_samples_path = GENERATED_DATA_PATH / dataset.name / str(cls)
+            epoch_samples_path.mkdir(parents=True, exist_ok=True)
+
+            for j in range(len(generated_images)):
+                imageio.imwrite(str(epoch_samples_path / ('%.5d.png' % (i * args.batch_size + j + 1))), generated_images[j])
