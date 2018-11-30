@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-from containers import STL10Container, POSSIBLE_AUGMENTATIONS
+from containers import CIFAR10Container, MNISTContainer, STL10Container, POSSIBLE_AUGMENTATIONS
 from models import Classifier
 from pathlib import Path
 from tqdm import tqdm
@@ -21,6 +21,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('-augmentations', nargs='+', type=str, choices=POSSIBLE_AUGMENTATIONS, default=[])
 parser.add_argument('-batch_size', type=int, default=50)
+parser.add_argument('-dataset', type=str, choices=['cifar10', 'mnist', 'stl10'], required=True)
 parser.add_argument('-evaluation_step', type=int, default=100)
 parser.add_argument('-gaussian_noise_std', type=int, default=2)
 parser.add_argument('-iterations', type=int, default=15000)
@@ -49,9 +50,18 @@ if args.name_suffix is not None:
 logging.info('Experiment name: %s.' % experiment_name)
 logging.info('Loading data...')
 
-train_set = STL10Container('train', args.batch_size, args.augmentations, args.rotation_range, args.scale_range,
-                           args.translation_range, args.gaussian_noise_std, args.snp_noise_probability)
-test_set = STL10Container('test', args.batch_size)
+if args.dataset == 'cifar10':
+    Container = CIFAR10Container
+elif args.dataset == 'mnist':
+    Container = MNISTContainer
+elif args.dataset == 'stl10':
+    Container = STL10Container
+else:
+    raise NotImplementedError
+
+train_set = Container('train', args.batch_size, args.augmentations, args.rotation_range, args.scale_range,
+                      args.translation_range, args.gaussian_noise_std, args.snp_noise_probability)
+test_set = Container('test', args.batch_size)
 
 logging.info('Constructing model...')
 
@@ -121,7 +131,7 @@ with tf.Session() as session:
             total_losses.append(batch_total_loss)
 
         logging.info('Observed base loss = %.4f, weight decay loss = %.4f and total loss = %.4f.' %
-                     (np.mean(base_losses), np.mean(weight_decay_losses), np.mean(total_losses)))
+                     (float(np.mean(base_losses)), float(np.mean(weight_decay_losses)), float(np.mean(total_losses))))
         logging.info('Evaluating on test data...')
 
         ground_truth, predictions = _get_ground_truth_and_predictions(test_set)
@@ -134,6 +144,7 @@ with tf.Session() as session:
 
 logging.info('Saving results...')
 
-RESULTS_PATH.mkdir(parents=True, exist_ok=True)
+dataset_results_path = RESULTS_PATH / args.dataset
+dataset_results_path.mkdir(parents=True, exist_ok=True)
 
-pd.DataFrame(results).to_csv(str(RESULTS_PATH / ('%s.csv' % experiment_name)), index=False)
+pd.DataFrame(results).to_csv(str(dataset_results_path / ('%s.csv' % experiment_name)), index=False)
