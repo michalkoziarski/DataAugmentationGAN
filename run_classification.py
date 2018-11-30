@@ -87,8 +87,8 @@ results = {'iteration': [], 'accuracy': []}
 
 with tf.Session() as session:
     def _get_ground_truth_and_predictions(dataset):
-        ground_truth = np.empty(dataset.size, np.int64)
-        predictions = np.empty(dataset.size, np.int64)
+        ground_truth = np.empty(dataset.n_images, np.int64)
+        predictions = np.empty(dataset.n_images, np.int64)
 
         current_index = 0
 
