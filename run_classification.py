@@ -77,7 +77,9 @@ weight_decay_loss = args.weight_decay * tf.add_n([tf.nn.l2_loss(w) for w in weig
 total_loss = base_loss + weight_decay_loss
 
 optimizer = tf.train.AdamOptimizer(args.learning_rate)
-train_step = optimizer.minimize(total_loss)
+
+with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
+    train_step = optimizer.minimize(total_loss)
 
 logging.info('Training model...')
 
