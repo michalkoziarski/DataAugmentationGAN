@@ -15,6 +15,7 @@ from tqdm import tqdm
 
 
 DATA_PATH = Path(__file__).parent / 'data'
+GENERATED_DATA_PATH = Path(__file__).parent / 'generated_data'
 TMP_PATH = Path(__file__).parent / 'tmp'
 
 POSSIBLE_AUGMENTATIONS = ['flip', 'rotation', 'scale', 'translation', 'color', 'gaussian_noise', 'snp_noise']
@@ -23,11 +24,13 @@ POSSIBLE_AUGMENTATIONS = ['flip', 'rotation', 'scale', 'translation', 'color', '
 class AbstractContainer(ABC):
     def __init__(self, partition, batch_size=128, augmentations=(), rotation_range=30,
                  scale_range=1.8, translation_range=0.25, gaussian_noise_std=2,
-                 snp_noise_probability=0.001, normalize=True, image_size=None, greyscale=False):
+                 snp_noise_probability=0.001, normalize=True, image_size=None,
+                 greyscale=False, n_generated_images=0):
         assert partition in ['train', 'test']
 
         if partition == 'test':
             assert len(augmentations) == 0
+            assert n_generated_images == 0
 
         for augmentation in augmentations:
             assert augmentation in POSSIBLE_AUGMENTATIONS
@@ -46,6 +49,7 @@ class AbstractContainer(ABC):
         self.normalize = normalize
         self.image_size = image_size
         self.greyscale = greyscale
+        self.n_generated_images = n_generated_images
 
         if partition == 'train':
             self.shuffling = True
@@ -95,6 +99,8 @@ class AbstractContainer(ABC):
 
                 self.n_images += 1
 
+        self.n_images += self.n_generated_images
+
         self.images = np.empty([self.n_images, self.image_size[0], self.image_size[1], 1 if self.greyscale else 3],
                                dtype=np.float32)
         self.labels = np.empty(self.n_images, dtype=np.int64)
@@ -105,6 +111,35 @@ class AbstractContainer(ABC):
             label = int(label_path.stem)
 
             for image_path in sorted(label_path.iterdir()):
+                image = imageio.imread(str(image_path))
+
+                if list(image.shape[:2]) != list(self.image_size):
+                    image = skimage.transform.resize(image, self.image_size) * 255.
+                else:
+                    image = image.astype(np.float32)
+
+                if self.greyscale:
+                    image = np.expand_dims(skimage.color.rgb2grey(image / 255.) * 255., 2)
+                else:
+                    image = skimage.color.grey2rgb(image / 255.) * 255.
+
+                self.images[current_index] = image
+                self.labels[current_index] = label
+
+                current_index += 1
+
+        n_generated_images_per_class = self.n_generated_images / len(np.unique(self.labels))
+        generated_data_path = GENERATED_DATA_PATH / self.name
+
+        assert n_generated_images_per_class == int(n_generated_images_per_class)
+
+        n_generated_images_per_class = int(n_generated_images_per_class)
+
+        for label_path in sorted(generated_data_path.iterdir()):
+            label = int(label_path.stem)
+
+            for i in range(n_generated_images_per_class):
+                image_path = label_path / ('%.5d.png' % (i + 1))
                 image = imageio.imread(str(image_path))
 
                 if list(image.shape[:2]) != list(self.image_size):
