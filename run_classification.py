@@ -26,6 +26,7 @@ parser.add_argument('-evaluation_step', type=int, default=100)
 parser.add_argument('-gaussian_noise_std', type=int, default=2)
 parser.add_argument('-iterations', type=int, default=15000)
 parser.add_argument('-learning_rate', type=float, default=0.0001)
+parser.add_argument('-n_generated_images', type=int, default=0)
 parser.add_argument('-name_suffix', type=str)
 parser.add_argument('-rotation_range', type=int, default=30)
 parser.add_argument('-scale_range', type=float, default=1.8)
@@ -44,6 +45,9 @@ else:
 
     experiment_name = 'experiment_augmentations=' + '+'.join(args.augmentations)
 
+if args.n_generated_images > 0:
+    experiment_name += 'n_generated_images=%d' % args.n_generated_images
+
 if args.name_suffix is not None:
     experiment_name += '_%s' % args.name_suffix
 
@@ -60,7 +64,8 @@ else:
     raise NotImplementedError
 
 train_set = Container('train', args.batch_size, args.augmentations, args.rotation_range, args.scale_range,
-                      args.translation_range, args.gaussian_noise_std, args.snp_noise_probability, image_size=[64, 64])
+                      args.translation_range, args.gaussian_noise_std, args.snp_noise_probability,
+                      image_size=[64, 64], n_generated_images=args.n_generated_images)
 test_set = Container('test', args.batch_size, image_size=[64, 64])
 
 logging.info('Constructing model...')
