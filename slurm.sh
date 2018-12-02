@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -N 1
 #SBATCH --ntasks-per-node=1
-#SBATCH --time=8:00:00
+#SBATCH --time=72:00:00
 #SBATCH -p plgrid-gpu
 #SBATCH --gres=gpu
 #SBATCH --mem=20000
