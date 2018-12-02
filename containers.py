@@ -25,7 +25,7 @@ class AbstractContainer(ABC):
     def __init__(self, partition, batch_size=128, augmentations=(), rotation_range=30,
                  scale_range=1.8, translation_range=0.25, gaussian_noise_std=2,
                  snp_noise_probability=0.001, normalize=True, image_size=None,
-                 greyscale=False, n_generated_images=0):
+                 greyscale=False, n_generated_images=0, generated_data_name_suffix=None):
         assert partition in ['train', 'test']
 
         if partition == 'test':
@@ -50,6 +50,7 @@ class AbstractContainer(ABC):
         self.image_size = image_size
         self.greyscale = greyscale
         self.n_generated_images = n_generated_images
+        self.generated_data_name_suffix = generated_data_name_suffix
 
         if partition == 'train':
             self.shuffling = True
@@ -129,7 +130,12 @@ class AbstractContainer(ABC):
                 current_index += 1
 
         n_generated_images_per_class = self.n_generated_images / len(np.unique(self.labels))
-        generated_data_path = GENERATED_DATA_PATH / self.name
+        dataset_name = self.name
+
+        if self.generated_data_name_suffix is not None:
+            dataset_name += '_%s' % self.generated_data_name_suffix
+
+        generated_data_path = GENERATED_DATA_PATH / dataset_name
 
         assert n_generated_images_per_class == int(n_generated_images_per_class)
 

@@ -31,20 +31,28 @@ parser.add_argument('-generated_images_per_class', type=int, default=10000)
 parser.add_argument('-iterations', type=int, default=7500)
 parser.add_argument('-image_similarity_decay', type=float, default=0.001)
 parser.add_argument('-learning_rate', type=float, default=0.0002)
+parser.add_argument('-name_suffix', type=str)
 parser.add_argument('-z_shape', type=int, default=100)
 
 args = parser.parse_args()
 
-logging.info('Loading data...')
-
 if args.dataset == 'cifar10':
     Container = CIFAR10Container
+    dataset_name = 'CIFAR-10'
 elif args.dataset == 'mnist':
     Container = MNISTContainer
+    dataset_name = 'MNIST'
 elif args.dataset == 'stl10':
     Container = STL10Container
+    dataset_name = 'STL-10'
 else:
     raise NotImplementedError
+
+if args.name_suffix is not None:
+    dataset_name += '_%s' % args.name_suffix
+
+logging.info('Running generation for %s...' % dataset_name)
+logging.info('Loading data...')
 
 dataset = Container('train', args.batch_size, image_size=[64, 64])
 n_classes = len(np.unique(dataset.labels))
@@ -154,7 +162,7 @@ with tf.Session() as session:
             generated_images = np.clip(generated_images, 0, 255)
             generated_images = generated_images.astype(np.uint8)
 
-            epoch_samples_path = SAMPLES_PATH / dataset.name / ('epoch_%.5d' % (i + 1)) / str(cls)
+            epoch_samples_path = SAMPLES_PATH / dataset_name / ('epoch_%.5d' % (i + 1)) / str(cls)
             epoch_samples_path.mkdir(parents=True, exist_ok=True)
 
             for j in range(len(generated_images)):
@@ -177,7 +185,7 @@ with tf.Session() as session:
             generated_images = np.clip(generated_images, 0, 255)
             generated_images = generated_images.astype(np.uint8)
 
-            epoch_samples_path = GENERATED_DATA_PATH / dataset.name / str(cls)
+            epoch_samples_path = GENERATED_DATA_PATH / dataset_name / str(cls)
             epoch_samples_path.mkdir(parents=True, exist_ok=True)
 
             for j in range(len(generated_images)):

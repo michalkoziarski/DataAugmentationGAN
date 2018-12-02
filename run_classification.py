@@ -24,6 +24,7 @@ parser.add_argument('-batch_size', type=int, default=50)
 parser.add_argument('-dataset', type=str, choices=['cifar10', 'mnist', 'stl10'], required=True)
 parser.add_argument('-evaluation_step', type=int, default=100)
 parser.add_argument('-gaussian_noise_std', type=int, default=2)
+parser.add_argument('-generated_data_name_suffix', type=str)
 parser.add_argument('-iterations', type=int, default=15000)
 parser.add_argument('-learning_rate', type=float, default=0.0001)
 parser.add_argument('-n_generated_images', type=int, default=0)
@@ -65,7 +66,8 @@ else:
 
 train_set = Container('train', args.batch_size, args.augmentations, args.rotation_range, args.scale_range,
                       args.translation_range, args.gaussian_noise_std, args.snp_noise_probability,
-                      image_size=[64, 64], n_generated_images=args.n_generated_images)
+                      image_size=[64, 64], n_generated_images=args.n_generated_images,
+                      generated_data_name_suffix=args.generated_data_name_suffix)
 test_set = Container('test', args.batch_size, image_size=[64, 64])
 
 logging.info('Constructing model...')
