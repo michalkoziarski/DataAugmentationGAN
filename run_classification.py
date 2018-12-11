@@ -47,7 +47,7 @@ else:
     experiment_name = 'experiment_augmentations=' + '+'.join(args.augmentations)
 
 if args.n_generated_images > 0:
-    experiment_name += 'n_generated_images=%d' % args.n_generated_images
+    experiment_name += '_n_generated_images=%d' % args.n_generated_images
 
 if args.name_suffix is not None:
     experiment_name += '_%s' % args.name_suffix
