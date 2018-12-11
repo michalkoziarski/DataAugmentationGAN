@@ -6,7 +6,7 @@ do
     do
         for n in 500 1000 2000 4000 8000 16000 32000 64000
         do
-            sbatch --output=${dataset}_using_generated_${n}_${iteration}.out slurm.sh run_classification.py -name_suffix ${iteration} -dataset ${dataset} -n_generated_images ${n} -generated_data_name_suffix ${iteration}
+            sbatch --output=${dataset}_using_generated_${n}_${iteration}.out slurm.sh run_classification.py -name_suffix ${iteration} -dataset ${dataset} -n_generated_images ${n}
         done
     done
 done
